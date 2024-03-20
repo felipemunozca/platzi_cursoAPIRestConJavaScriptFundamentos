@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consume tu primera API REST</title>
+</head>
+<body>
+    <h1>Gatitos aleatorios</h1>
+
+    <img alt="Foto gatito aleatorio">
+
+    <script>
+        /**
+         * N3.1: Para el desarrollo de esta clase se utilizara la API gratuita y publica the cat.
+         * Documentación oficial
+         * https://thecatapi.com/
+         */
+        console.log('Hello, world')
+
+        /**
+         * N3.2: Se crea una constante con al url de la API como sale en la documentación oficial, en la sección Quick Start.
+         */
+        const URL = 'https://api.thecatapi.com/v1/images/search';
+
+        /**
+         * N3.4: Se utiliza la función fetch() para retornar una promesa.
+         * Se utiliza el método then() para convertir la respuesta el algo que javascript pueda entender, en esta caso, sera un json.
+         * Se utiliza un segundo método then() para recibir los datos de la API.
+         * Se agrega la ruta o source de la imagen, utilizando la promesa data se llama al primer elemento del arreglo, es decir, la 
+         *      posición cero, y después se solicita el atributo url.
+         */
+        fetch(URL)
+            .then(res => res.json())
+            .then(data => {
+                const img = document.querySelector('img');
+                img.src = data[0].url;
+            });
+    </script>
+</body>
+</html>
