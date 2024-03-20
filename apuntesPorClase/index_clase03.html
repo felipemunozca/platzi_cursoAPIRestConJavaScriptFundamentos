@@ -4,11 +4,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consume tu primera API REST</title>
+    <style>
+        body{
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', Courier, monospace;
+            background-color: papayawhip;
+        }
+        .main-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .cat-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 2px solid white;
+            padding: 10px;
+            border-radius: 4px;
+            width: 50vh;
+            background-color: khaki;
+        }
+        .cat-container button {
+            background: royalblue;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 16px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            font-size: medium;
+        }
+        .cat-container img {
+            width: 100%;
+            padding: 10px 0;
+        }
+    </style>
 </head>
 <body>
-    <h1>Gatitos aleatorios</h1>
+    <main class="main-container">
+        <section class="cat-container">
+            <h1>Gatitos aleatorios</h1>
+            <button>Muéstrame otro michi</button>
 
-    <img alt="Foto gatito aleatorio">
+            <img alt="Foto gato aleatorio">
+        </section>
+    </main>
 
     <script>
         /**
@@ -30,12 +74,30 @@
          * Se agrega la ruta o source de la imagen, utilizando la promesa data se llama al primer elemento del arreglo, es decir, la 
          *      posición cero, y después se solicita el atributo url.
          */
-        fetch(URL)
-            .then(res => res.json())
-            .then(data => {
-                const img = document.querySelector('img');
-                img.src = data[0].url;
-            });
+        // fetch(URL)
+        //     .then(res => res.json())
+        //     .then(data => {
+        //         const img = document.querySelector('img');
+        //         img.src = data[0].url;
+        //     });
+
+        /**
+         * RETO DE LA CLASE
+         * 1. Crear un botón en el html y que al presionarlo, recargue la imagen. Este botón debe tener su propio evento.
+         * 2. Utilizar async/await para el llamado a la API.
+         */
+        const btnRandom = document.querySelector("button");
+        const image = document.querySelector('img');
+
+        btnRandom.addEventListener('click', getCats);
+
+        async function getCats() {
+            const response = await fetch(URL);
+            const data = await response.json();
+
+            image.src = data[0].url;
+        }
+        getCats();
     </script>
 </body>
 </html>
