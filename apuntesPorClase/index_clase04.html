@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Endpoints y query parameters</title>
+</head>
+<body>
+    <h1>Gatitos aleatorios</h1>
+
+    <img id="img1" width="180" alt="Foto gatito aleatorio">
+    <img id="img2" width="180" alt="Foto gatito aleatorio">
+    <img id="img3" width="180" alt="Foto gatito aleatorio">
+    
+    <!--  
+        N4.1: Se agrega un botón con un atributo onclick() y el nombre de la función reload().
+    -->
+    <button onclick="reload()">Recargar</button>
+
+    <script>
+        console.log('Hello, world')
+
+        /**
+         * N4.4: Se renombra la constante de URL a API_URL para evitar confusiones la url de la imagen.
+         * En este ejercicio en vez de mostrar 1 imagen aleatoria, serán 3. Para traer mas imágenes solo se debe agregar un signo de 
+         *      pregunta y a continuación el query parameter "limit" en la url, como aparece en la documentación oficial:
+         * https://developers.thecatapi.com/view-account/ylX4blBYT9FaoVd6OhvR?report=bOoHBz-8t
+         * 
+         * N4.5: Se se quiere agregar mas de un query parameter, al final de la url utilizar el signo ampersand & y el segundo
+         *      query parameter, por ejemplo, que muestre solo la pagina 2 de imágenes:
+         *      https://api.thecatapi.com/v1/images/search?limit=3&page=2
+         */
+        const API_URL = 'https://api.thecatapi.com/v1/images/search?limit=3';
+
+        /**
+         * N4.2: Se crea una función asíncrona para el llamado de la API.
+         * Se crea una constante para almacenar la respuesta del llamado a la API.
+         * Se crea una constante para almacenar los datos que están guardados en la respuesta y que deben transformarse a json.
+         */
+        async function reload() {
+            const res = await fetch(API_URL);
+            const data = await res.json();
+
+            // console.log(data)
+            const img1 = document.getElementById('img1');
+            const img2 = document.getElementById('img2');
+            const img3 = document.getElementById('img3');
+            
+            img1.src = data[0].url;
+            img2.src = data[1].url;
+            img3.src = data[2].url;
+        }
+
+        /**
+         * N4.3: Se inicializa la función reload() apenas se termina de cargar el código JavaScript.
+         * De esta forma se cargaran las imágenes de los gatos al abrir la pagina.
+         */
+        reload();
+    </script>
+</body>
+</html>
