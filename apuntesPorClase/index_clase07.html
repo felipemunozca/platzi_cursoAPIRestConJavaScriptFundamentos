@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maquetación del proyecto</title>
+</head>
+<body>
+    <h1>Michis App</h1>
+
+    <!--  
+        N7.1: Se comienza por definir la estructura del proyecto del curso.
+            Se crean dos secciones.
+            En la primera sección se mostraran 3 imágenes de gatos como lo estábamos haciendo.
+            El la segunda sección se agregara la imagen del gato que selecciones que mas nos guste.
+    -->
+    <section id="randomMichis">
+        <h2>Michis aleatorios</h2>
+
+        <!--  
+            N7.2: Se utiliza la etiqueta <article> para separar cada imagen y asi evitar utilizar la etiqueta <div>
+                Se agrega un botón con el que se agregara la imagen en la sección favoritos.
+        -->
+        <article>
+            <img id="img1" width="150" alt="Foto gatito aleatorio">
+            <button>Guardar michi en favoritos</button>
+        </article>
+
+        <article>
+            <img id="img2" width="150" alt="Foto gatito aleatorio">
+            <button>Guardar michi en favoritos</button>
+        </article>
+
+        <article>
+            <img id="img3" width="150" alt="Foto gatito aleatorio">
+            <button>Guardar michi en favoritos</button>
+        </article>
+
+        <button onclick="reload()">Recargar</button>
+    </section>
+    
+    <section id="favoritesMichis">
+        <h2>Michis favoritos</h2>
+
+        <article>
+            <img id="img4" width="150" alt="Foto gatito aleatorio">
+            <button>Sacar al michi de favoritos</button>
+        </article>
+    </section>
+
+
+</body>
+</html>
