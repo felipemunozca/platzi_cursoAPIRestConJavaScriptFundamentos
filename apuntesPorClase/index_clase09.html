@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GET: leyendo michis favoritos</title>
+</head>
+<body>
+    <h1>Michis App</h1>
+
+    <!--  
+        N9.5: Se crea una etiqueta <span> que se utilizara como un mensaje para indicarle al usuario si existe un problema, cual es el error.
+    -->
+    <span id="error">--</span>
+
+    <section id="randomMichis">
+        <h2>Michis aleatorios</h2>
+
+        <article>
+            <img id="img1" width="150" alt="Foto gatito aleatorio">
+            <button>Guardar michi en favoritos</button>
+        </article>
+
+        <article>
+            <img id="img2" width="150" alt="Foto gatito aleatorio">
+            <button>Guardar michi en favoritos</button>
+        </article>
+
+        <!-- <article>
+            <img id="img3" width="150" alt="Foto gatito aleatorio">
+            <button>Guardar michi en favoritos</button>
+        </article> -->
+
+        <button onclick="loadRandomMichis()">Recargar</button>
+    </section>
+    
+    <section id="favoritesMichis">
+        <h2>Michis favoritos</h2>
+
+        <article>
+            <img id="img4" width="150" alt="Foto gatito aleatorio">
+            <button>Sacar al michi de favoritos</button>
+        </article>
+    </section>
+
+    <script>
+        const API_URL = 'https://api.thecatapi.com/v1/images/search?limit=2&api_key=live_b4Q3YyUrueAqjk7Ch6UKAdsd64vDQEcUCTCqjtWNczbGdixz98TD4R9rVfmn5iHh';
+
+        /**
+         * N9.3: Para poder utilizar una sección de favoritos, se debe apuntar a otro endpoint como se señala en la documentación oficial.
+         * https://developers.thecatapi.com/view-account/ylX4blBYT9FaoVd6OhvR?report=mkzf_eYzV
+         * 
+         * Es por este motivo que se debe crear una nueva constante, que apunte al endpoint /favourites
+         * DATO IMPORTANTE: No esta mal escrita la palabra sino que es un diferencia en la escritura de cada país; Favorite (United State of America) Favourite (England)
+         * 
+         * N9.4:Para conectarse a este endpoint es OBLIGATORIO utilizar la API KEY como método de verificación.
+         */
+        const API_URL_FAVORITES = 'https://api.thecatapi.com/v1/favourites?limit=2&api_key=live_b4Q3YyUrueAqjk7Ch6UKAdsd64vDQEcUCTCqjtWNczbGdixz98TD4R9rVfmn5iHh';
+
+        const spanError = document.getElementById('error');
+        
+        /** 
+         * N9.1: Se cambia el nombre de la función por uno mas descriptivo.
+         * Ademas se cambia el numero de imágenes de 3 a 2.
+         * DESAFIÓ: completar el código para que luego el frontend tenga 3 imágenes.
+         */
+        async function loadRandomMichis() {
+            const res = await fetch(API_URL);
+            const data = await res.json();
+
+            console.log('Random')
+            console.log(data)
+
+            /**
+             * N9.6: Se puede crear una sentencia if para validar estado que se almacena en la variable res.
+             * Cualquier valor que no sea un 200, se imprimirá el error en la etiqueta <span>
+             */
+            if (res.status !== 200) {
+                spanError.textContent = "Hubo un error: " + res.status;
+            } else {
+                const img1 = document.getElementById('img1');
+                const img2 = document.getElementById('img2');
+                // const img3 = document.getElementById('img3');
+                
+                img1.src = data[0].url;
+                img2.src = data[1].url;
+                // img3.src = data[2].url;
+            }
+
+        }
+
+        /**
+         * N9.2: Se crea una nueva función para almacenar en memoria, las imágenes de gatos que el usuario seleccione en favoritos.
+         */
+        async function loadFavoritesMichis() {
+            const res = await fetch(API_URL_FAVORITES);
+            const data = await res.json();
+            console.log('Favoritos')
+            console.log(data)
+
+            /**
+             * N9.7: Se puede personalizar aun mas el mensaje de error, se puede agregar el mensaje que se guarda en la variable data.
+             * Para hacer una prueba, vasta con borrar la API KEY para ver como se muestra el mensaje de error.
+             */
+            if (res.status !== 200) {
+                spanError.innerHTML = "Hubo un error: " + res.status + "<br>" + data.message;
+            }
+        }
+        
+        loadRandomMichis();
+        loadFavoritesMichis();
+    </script>
+</body>
+</html>
