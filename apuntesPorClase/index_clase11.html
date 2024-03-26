@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultas a la API para escribir HTML dinámico</title>
+</head>
+<body>
+    <h1>Michis App</h1>
+
+    <span id="error"></span>
+
+    <section id="randomMichis">
+        <h2>Michis aleatorios</h2>
+
+        <article>
+            <img id="img1" width="150" alt="Foto gatito aleatorio">
+            <!--  
+                N11.6: Para poder obtener el id aleatorio de cada gato y luego agregarlo a favoritos, se cargara utilizando código 
+                    javascript por lo que se puede quitar la propiedad onclick del botón.
+            -->
+            <button id="btn1">
+                Guardar michi en favoritos
+            </button>
+        </article>
+
+        <article>
+            <img id="img2" width="150" alt="Foto gatito aleatorio">
+            <button id="btn2">
+                Guardar michi en favoritos
+            </button>
+        </article>
+
+        <button onclick="loadRandomMichis()">Recargar</button>
+    </section>
+    
+    <section id="favoriteMichis">
+        <h2>Michis favoritos</h2>
+
+        <article>
+            <img id="img4" width="150" alt="Foto gatito aleatorio">
+            <button>Sacar al michi de favoritos</button>
+        </article>
+    </section>
+
+    <script>
+        const API_URL = 'https://api.thecatapi.com/v1/images/search?limit=2&api_key=live_b4Q3YyUrueAqjk7Ch6UKAdsd64vDQEcUCTCqjtWNczbGdixz98TD4R9rVfmn5iHh';
+        /**
+         * N11.9: IMPORTANTE para poder ver todos los gatos favoritos cuando sean mas de 2, se debe quitar el limite de la url.
+         */
+        const API_URL_FAVOURITES = 'https://api.thecatapi.com/v1/favourites?api_key=live_b4Q3YyUrueAqjk7Ch6UKAdsd64vDQEcUCTCqjtWNczbGdixz98TD4R9rVfmn5iHh';
+        
+        const spanError = document.getElementById('error');
+
+        async function loadRandomMichis() {
+            const res = await fetch(API_URL);
+            const data = await res.json();
+            
+            console.log('Random');
+            console.log(data);
+
+            if (res.status !== 200) {
+                spanError.textContent = "Hubo un error: " + res.status;
+            } else {
+                const img1 = document.getElementById('img1');
+                const img2 = document.getElementById('img2');
+                /**
+                 * N11.7: Se crean variables para los botones para guardar gatos en favoritos. Todo esto para luego agregarles la
+                 *      propiedad onclick quitada en N11.6
+                 */
+                const btn1 = document.getElementById('btn1');
+                const btn2 = document.getElementById('btn2');
+                
+                img1.src = data[0].url;
+                img2.src = data[1].url;
+
+                /**
+                 * N11.8: Se le agrega la propiedad onclick a cada botón y utilizando una arrow function (Se debe utilizar la arrow
+                 *      function para evitar que la funcion save se ejecute sola con solo recargar la pagina y guarde a ambos gatos 
+                 *      en el endpoint), se le asigna la función saveFavouriteMichi() que llevara como parámetro la "data" y la 
+                 *      "posición" en el arreglo (0 o 1) junto a la propiedad "id" que es lo que necesito para guardarla en el endpoint.
+                 */
+                btn1.onclick = () => saveFavouriteMichi(data[0].id);
+                btn2.onclick = () => saveFavouriteMichi(data[1].id);
+            }
+        }
+
+        async function loadFavouriteMichis() {
+            const res = await fetch(API_URL_FAVOURITES);
+            const data = await res.json();
+            console.log('Favoritos');
+            console.log(data);
+
+            if (res.status !== 200) {
+                spanError.innerHTML = "Hubo un error: " + res.status + "<br>" + data.message;
+            } else {
+                /**
+                 * N11.1: Se crea un ciclo forEach() para recorrer el endpoint /favourites e imprimir los gatos seleccionados en el html. 
+                 */
+                data.forEach(michi => {
+                    /**
+                     * N11.2: Se manipula el dom creando las etiquetas mediante código Javascript
+                     * Lo primero es encontrar la etiqueta contenedora donde se agregaran las demás etiquetas.
+                     * Luego se crean las etiquetas <article>, <img>, <button> y se le agrega el texto "Sacar..." al botón.
+                     */
+                    const section = document.getElementById('favoriteMichis')
+                    const article = document.createElement('article');
+                    const img = document.createElement('img');
+                    const btn = document.createElement('button');
+                    const btnText = document.createTextNode('Sacar al michi de favoritos');
+                    
+                    /**
+                     * N11.3: Ahora se comienza a agregar cada elemento html como hijos de otro etiqueta, por lo que se comienza desde
+                     *      adentro hacia afuera.
+                     * LLamo al botón y le agrego el texto.
+                     * A la imagen le agrego la url de la imagen.
+                     * A la imagen le agrego un tamaño de width determinado (Esto después se puede ignorar y reemplazar con clases CSS).
+                     * Al articulo le agrego la imagen y el botón en el mismo nivel dentro de la misma etiqueta.
+                     * Finalmente, a la sección le agrego el articulo con todo el contenido ya creado.
+                     */
+                    
+                    btn.appendChild(btnText);
+                    img.src = michi.image.url;
+                    img.width = 150;
+                    article.appendChild(img);
+                    article.appendChild(btn);
+                    section.appendChild(article);
+                });
+            }
+        }
+
+        /**
+         * N11.4: Manteniendo la normalización del código, se cambia el nombre de la función de plural a singular ya que solo se 
+         *      esta guardando UN GATO A LA VEZ.
+         * Se agrega el id como argumento, el cual sera el id que luego se guardara en el endpoint.
+         */
+        async function saveFavouriteMichi(id) {
+            const res = await fetch(API_URL_FAVOURITES, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    
+                },
+                
+                body: JSON.stringify({
+                    /**
+                     * N11.5: Se reemplaza el id por defecto que se tenia, por el que se esta recibiendo como argumento.
+                     */
+                    image_id: id
+                }),
+            });
+            const data = await res.json();
+            
+            console.log('Gatito Guardado');
+            console.log(res);
+
+            if (res.status !== 200) {
+                spanError.innerHTML = "Hubo un error: " + res.status + data.message;
+            }
+        }
+
+        loadRandomMichis();
+        loadFavouriteMichis();
+    </script>
+</body>
+</html>
