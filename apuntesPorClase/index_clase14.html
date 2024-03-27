@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Header de autorización</title>
+</head>
+<body>
+    <h1>Michis App</h1>
+
+    <span id="error"></span>
+
+    <section id="randomMichis">
+        <h2>Michis aleatorios</h2>
+
+        <article>
+            <img id="img1" width="150" alt="Foto gatito aleatorio">
+
+            <button id="btn1">
+                Guardar michi en favoritos
+            </button>
+        </article>
+
+        <article>
+            <img id="img2" width="150" alt="Foto gatito aleatorio">
+            <button id="btn2">
+                Guardar michi en favoritos
+            </button>
+        </article>
+
+        <button onclick="loadRandomMichis()">Recargar</button>
+    </section>
+    
+    <section id="favoriteMichis">
+        <h2>Michis favoritos</h2>
+
+        <article>
+            <img id="img4" width="150" alt="Foto gatito aleatorio">
+            <button>Sacar al michi de favoritos</button>
+        </article>
+    </section>
+
+    <script>
+        /**
+         * N14.1: Para limpiar la url y no tener que utilizar la API KEY como un query parameter, se eliminara y se agregara directamente
+         *      dentro de cada función que haga un llamado a la API.
+         * Dentro de la url para llamar a la API y mostrar 2 gatos random no es necesario utilizar la API KEY asi que se puede borrar.
+         * Dentro de la url para mostrar los favoritos, se borra la API KEY que se enviara desde la función loadFavouriteMichis().
+         * Dentro de la url para eliminar favoritos, se borra la API KEY que se enviara desde la función deleteFavouriteMichi().
+         */
+        const API_URL = 'https://api.thecatapi.com/v1/images/search?limit=2';
+        const API_URL_FAVOURITES = 'https://api.thecatapi.com/v1/favourites';
+        // const API_URL_FAVOURITES = 'https://api.thecatapi.com/v1/favourites?api_key=live_b4Q3YyUrueAqjk7Ch6UKAdsd64vDQEcUCTCqjtWNczbGdixz98TD4R9rVfmn5iHh';
+        const API_URL_FAVOURITES_DELETE = (id) => `https://api.thecatapi.com/v1/favourites/${id}`;
+        // const API_URL_FAVOURITES_DELETE = (id) => `https://api.thecatapi.com/v1/favourites/${id}?api_key=live_b4Q3YyUrueAqjk7Ch6UKAdsd64vDQEcUCTCqjtWNczbGdixz98TD4R9rVfmn5iHh`;
+
+        const spanError = document.getElementById('error');
+
+        async function loadRandomMichis() {
+            const res = await fetch(API_URL);
+            const data = await res.json();
+            
+            console.log('Random');
+            console.log(data);
+
+            if (res.status !== 200) {
+                spanError.textContent = "Hubo un error: " + res.status;
+            } else {
+                const img1 = document.getElementById('img1');
+                const img2 = document.getElementById('img2');
+                const btn1 = document.getElementById('btn1');
+                const btn2 = document.getElementById('btn2');
+                
+                img1.src = data[0].url;
+                img2.src = data[1].url;
+
+                btn1.onclick = () => saveFavouriteMichi(data[0].id);
+                btn2.onclick = () => saveFavouriteMichi(data[1].id);
+            }
+        }
+
+        async function loadFavouriteMichis() {
+            /**
+             * N14.2: Se quita la API KEY que estaba dentro de la variable "API_URL_FAVOURITES" y se enviara directamente, agregando
+             *      el método GET y utilizando la propiedad headers y la propiedad x-api-key como sale en la documentación oficial.
+             */
+            const res = await fetch(API_URL_FAVOURITES, {
+                /**
+                 * N14.5: Es importante señalar que en algunos sitios señalan que pasar la API KEY por el header es mas seguro que 
+                 *      pasarla directamente por la url, pero siendo sinceros, ambos métodos son poco seguros, ya que se puede ver la
+                 *      información directamente en el navegador.
+                 * -> En la pagina, clic derecho y seleccionar inspeccionar 
+                 * -> ir a la pestaña "red" (network) 
+                 * -> En la sección "Nombre" (name) buscar alguna conexión a un endpoint como /favourites y hacer clic
+                 * -> En la pestaña "Encabezado" (headers) en la sección General se puede ver como esta url completa con la API KEY 
+                 *      completamente visible.
+                 */
+                method: 'GET',
+                headers: {
+                    'X-API-KEY': 'live_b4Q3YyUrueAqjk7Ch6UKAdsd64vDQEcUCTCqjtWNczbGdixz98TD4R9rVfmn5iHh',
+                },
+            });
+            const data = await res.json();
+            console.log('Favoritos');
+            console.log(data);
+
+            if (res.status !== 200) {
+                spanError.innerHTML = "Hubo un error: " + res.status + "<br>" + data.message;
+            } else {
+                const section = document.getElementById('favoriteMichis')
+                section.innerHTML = "";
+                const h2 = document.createElement('h2');
+                const h2Text = document.createTextNode('Michis favoritos');
+                h2.appendChild(h2Text);
+                section.appendChild(h2);
+                
+                
+                data.forEach(michi => {
+                    const article = document.createElement('article');
+                    const img = document.createElement('img');
+                    const btn = document.createElement('button');
+                    const btnText = document.createTextNode('Sacar al michi de favoritos');
+                    
+                    btn.appendChild(btnText);
+                    btn.onclick = () => deleteFavouriteMichi(michi.id);
+                    
+                    img.src = michi.image.url;
+                    img.width = 150;
+                    article.appendChild(img);
+                    article.appendChild(btn);
+                    section.appendChild(article);
+                });
+            }
+        }
+
+        async function saveFavouriteMichi(id) {
+            const res = await fetch(API_URL_FAVOURITES, {
+                method: 'POST',
+                /**
+                 * N14.3: Ya que headers se escribe en plural, da una pista que pueden definirse uno o mas header, como en este caso
+                 *      se agrega la API KEY para poder guardar los gatos dentro del endpoint /favourites.
+                 */
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-KEY': 'live_b4Q3YyUrueAqjk7Ch6UKAdsd64vDQEcUCTCqjtWNczbGdixz98TD4R9rVfmn5iHh',
+                },
+                
+                body: JSON.stringify({
+                    image_id: id
+                }),
+            });
+            const data = await res.json();
+            
+            console.log('Gatito Guardado');
+            console.log(res);
+
+            if (res.status !== 200) {
+                spanError.innerHTML = "Hubo un error: " + res.status + data.message;
+            } else {
+                console.log('Michi agregado a favoritos')
+                loadFavouriteMichis();
+            }
+        }
+
+        async function deleteFavouriteMichi(id) {
+            const res = await fetch(API_URL_FAVOURITES_DELETE(id), {
+                method: 'DELETE',
+                /**
+                 * N14.4: Se agrega el headers y la API KEY para cumplir con el query parameter como pide la documentación oficial.
+                 */
+                headers: {
+                    'X-API-KEY': 'live_b4Q3YyUrueAqjk7Ch6UKAdsd64vDQEcUCTCqjtWNczbGdixz98TD4R9rVfmn5iHh',
+                },
+            });
+            const data = await res.json();
+
+            
+            if (res.status !== 200) {
+                spanError.innerHTML = "Hubo un error: " + res.status + data.message;
+            } else {
+                console.log('Michi eliminado de favoritos')
+                loadFavouriteMichis();
+            }
+        }
+
+        loadRandomMichis();
+        loadFavouriteMichis();
+    </script>
+</body>
+</html>
