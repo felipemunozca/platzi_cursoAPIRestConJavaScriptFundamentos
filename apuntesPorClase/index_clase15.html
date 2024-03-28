@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Header de Content-Type</title>
+</head>
+<body>
+    <h1>Michis App</h1>
+
+    <span id="error"></span>
+
+    <section id="randomMichis">
+        <h2>Michis aleatorios</h2>
+
+        <article>
+            <img id="img1" width="150" alt="Foto gatito aleatorio">
+
+            <button id="btn1">
+                Guardar michi en favoritos
+            </button>
+        </article>
+
+        <article>
+            <img id="img2" width="150" alt="Foto gatito aleatorio">
+            <button id="btn2">
+                Guardar michi en favoritos
+            </button>
+        </article>
+
+        <button onclick="loadRandomMichis()">Recargar</button>
+    </section>
+    
+    <section id="favoriteMichis">
+        <h2>Michis favoritos</h2>
+
+        <article>
+            <img id="img4" width="150" alt="Foto gatito aleatorio">
+            <button>Header de Content-Type</button>
+        </article>
+    </section>
+
+    <script>
+        const API_URL = 'https://api.thecatapi.com/v1/images/search?limit=2';
+        const API_URL_FAVOURITES = 'https://api.thecatapi.com/v1/favourites';
+        const API_URL_FAVOURITES_DELETE = (id) => `https://api.thecatapi.com/v1/favourites/${id}`;
+
+        const spanError = document.getElementById('error');
+
+        async function loadRandomMichis() {
+            const res = await fetch(API_URL);
+            const data = await res.json();
+            
+            console.log('Random');
+            console.log(data);
+
+            if (res.status !== 200) {
+                spanError.textContent = "Hubo un error: " + res.status;
+            } else {
+                const img1 = document.getElementById('img1');
+                const img2 = document.getElementById('img2');
+                const btn1 = document.getElementById('btn1');
+                const btn2 = document.getElementById('btn2');
+                
+                img1.src = data[0].url;
+                img2.src = data[1].url;
+
+                btn1.onclick = () => saveFavouriteMichi(data[0].id);
+                btn2.onclick = () => saveFavouriteMichi(data[1].id);
+            }
+        }
+
+        async function loadFavouriteMichis() {
+            const res = await fetch(API_URL_FAVOURITES, {
+                method: 'GET',
+                headers: {
+                    'X-API-KEY': 'live_b4Q3YyUrueAqjk7Ch6UKAdsd64vDQEcUCTCqjtWNczbGdixz98TD4R9rVfmn5iHh',
+                },
+            });
+            const data = await res.json();
+            console.log('Favoritos');
+            console.log(data);
+
+            if (res.status !== 200) {
+                spanError.innerHTML = "Hubo un error: " + res.status + "<br>" + data.message;
+            } else {
+                const section = document.getElementById('favoriteMichis')
+                section.innerHTML = "";
+                const h2 = document.createElement('h2');
+                const h2Text = document.createTextNode('Michis favoritos');
+                h2.appendChild(h2Text);
+                section.appendChild(h2);
+                
+                
+                data.forEach(michi => {
+                    const article = document.createElement('article');
+                    const img = document.createElement('img');
+                    const btn = document.createElement('button');
+                    const btnText = document.createTextNode('Sacar al michi de favoritos');
+                    
+                    btn.appendChild(btnText);
+                    btn.onclick = () => deleteFavouriteMichi(michi.id);
+                    
+                    img.src = michi.image.url;
+                    img.width = 150;
+                    article.appendChild(img);
+                    article.appendChild(btn);
+                    section.appendChild(article);
+                });
+            }
+        }
+
+        async function saveFavouriteMichi(id) {
+            const res = await fetch(API_URL_FAVOURITES, {
+                method: 'POST',
+                /**
+                 * N15.1: Se realizara una prueba cambiando el Content-type por uno de tipo texto, la idea de esta prueba es hacer
+                 *      que el código falle y ver que sucede cuando se produce el error.
+                 * 
+                 * Cuando le doy al botón de "guardar michi" se producirá un error 400. 
+                 * Error del frontend, tenemos que enviar el id de la foto del gato que sea en json y no en texto plano.
+                 * 
+                 */
+                headers: {
+                    'Content-Type': 'text/plain',
+                    'X-API-KEY': 'live_b4Q3YyUrueAqjk7Ch6UKAdsd64vDQEcUCTCqjtWNczbGdixz98TD4R9rVfmn5iHh',
+                },
+                /**
+                 * N15.2: Si al body no se le agrega la cadena de texto sera un json, también se produce un error
+                 * 
+                 * Error 400 desde el frontend. Se espera un token o JSON en la petición.
+                 */
+                body: ({
+                    image_id: id
+                }),
+            });
+            const data = await res.json();
+            
+            console.log('Gatito Guardado');
+            console.log(res);
+
+            if (res.status !== 200) {
+                spanError.innerHTML = "Hubo un error: " + res.status + data.message;
+            } else {
+                console.log('Michi agregado a favoritos')
+                loadFavouriteMichis();
+            }
+        }
+
+        async function deleteFavouriteMichi(id) {
+            const res = await fetch(API_URL_FAVOURITES_DELETE(id), {
+                method: 'DELETE',
+                headers: {
+                    'X-API-KEY': 'live_b4Q3YyUrueAqjk7Ch6UKAdsd64vDQEcUCTCqjtWNczbGdixz98TD4R9rVfmn5iHh',
+                },
+            });
+            const data = await res.json();
+
+            
+            if (res.status !== 200) {
+                spanError.innerHTML = "Hubo un error: " + res.status + data.message;
+            } else {
+                console.log('Michi eliminado de favoritos')
+                loadFavouriteMichis();
+            }
+        }
+
+        loadRandomMichis();
+        loadFavouriteMichis();
+        
+        /**
+         * N15.3: Documentación extra sobre los MIME Types
+         * https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
+         */
+    </script>
+</body>
+</html>
