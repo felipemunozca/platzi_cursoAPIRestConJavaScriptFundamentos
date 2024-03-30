@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Axios: librerías de JavaScript para consumir APIs</title>
+</head>
+<body>
+    <h1>Michis App</h1>
+
+    <span id="error"></span>
+
+    <section id="randomMichis">
+        <h2>Michis aleatorios</h2>
+
+        <article>
+            <img id="img1" width="150" alt="Foto gatito aleatorio">
+
+            <button id="btn1">
+                Guardar michi en favoritos
+            </button>
+        </article>
+
+        <article>
+            <img id="img2" width="150" alt="Foto gatito aleatorio">
+            <button id="btn2">
+                Guardar michi en favoritos
+            </button>
+        </article>
+
+        <button onclick="loadRandomMichis()">Recargar</button>
+    </section>
+
+    <section id="uploadingMichi">
+        <h2>Sube la foto de tu Michi</h2>
+        <form id="uploadingForm">
+            <input id="file" type="file" name="file">
+            <button type="button" onclick="uploadMichiPhoto()">Subir foto de Michi</button>
+        </form>
+    </section>
+
+    <section id="favoriteMichis">
+        <h2>Michis favoritos</h2>
+
+        <article>
+            <img id="img4" width="150" alt="Foto gatito aleatorio">
+            <button>Sacar al michi de favoritos</button>
+        </article>
+    </section>
+
+    <!--  
+        N17.1: Para esta clase realizaremos algunos cambios y se agregara el uso de Axios que es un cliente HTTP basado en promesas.
+        Existen diferentes formas de utilizarlo, como instalarlo mediante npm, yam o usando un enlace CDN como aparece en la
+        documentación oficial
+        https://axios-http.com/es/docs/intro
+        El enlace del CDN debe ir arriba del código JavaScript ya que debe cargar antes de realizar la primera instancia.
+    -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <script>
+        /**
+         * N17.2: Se puede crear una instancia de axios en donde se guarde toda la configuración necesaria para conectarse a una API
+         *      y luego declararlo en cada función sin tener que repetir tanto código como hasta ahora.
+         * Para crear la instancia, seguir la documentación oficial:
+         * https://axios-http.com/es/docs/instance
+         * 
+         * No es obligatorio colocar toda la información, en este caso solo se definirá la url básica de la API, como se explica 
+         *      en otra sección de la documentación oficial:
+         * https://axios-http.com/es/docs/config_defaults
+         */
+        const connection_api = axios.create({
+            baseURL: 'https://api.thecatapi.com/v1',
+        });
+        /**
+         * N17.3: Ademas se puede crear un modulo para registrar nuestro API KEY y definir por defecto. Asi en caso que nuestra 
+         *      key cambie o nos den una nueva, solo se reemplaza en esta parte del código, y el resto sigue funcionando igual, sin 
+         *      tener que ir función por función pegando la nueva key.
+         */
+        connection_api.defaults.headers.common['X-API-KEY'] = 'live_b4Q3YyUrueAqjk7Ch6UKAdsd64vDQEcUCTCqjtWNczbGdixz98TD4R9rVfmn5iHh';
+
+        
+        const API_URL = 'https://api.thecatapi.com/v1/images/search?limit=2';
+        const API_URL_FAVOURITES = 'https://api.thecatapi.com/v1/favourites';
+        const API_URL_FAVOURITES_DELETE = (id) => `https://api.thecatapi.com/v1/favourites/${id}`;
+        const API_URL_UPLOAD = 'https://api.thecatapi.com/v1/images/upload';
+
+        const spanError = document.getElementById('error');
+
+        async function loadRandomMichis() {
+            const res = await fetch(API_URL);
+            const data = await res.json();
+            
+            console.log('Random');
+            console.log(data);
+
+            if (res.status !== 200) {
+                spanError.textContent = "Hubo un error: " + res.status;
+            } else {
+                const img1 = document.getElementById('img1');
+                const img2 = document.getElementById('img2');
+                const btn1 = document.getElementById('btn1');
+                const btn2 = document.getElementById('btn2');
+                
+                img1.src = data[0].url;
+                img2.src = data[1].url;
+
+                btn1.onclick = () => saveFavouriteMichi(data[0].id);
+                btn2.onclick = () => saveFavouriteMichi(data[1].id);
+            }
+        }
+
+        async function loadFavouriteMichis() {
+            /**
+             * N17.6: DESAFIÓ DE LA CLASE
+             * Utilizar axios para actualizar el código para llamar a la lista de gatos guardados en favoritos.
+             */
+            
+            // const res = await fetch(API_URL_FAVOURITES, {
+            //     method: 'GET',
+            //     headers: {
+            //         'X-API-KEY': 'live_b4Q3YyUrueAqjk7Ch6UKAdsd64vDQEcUCTCqjtWNczbGdixz98TD4R9rVfmn5iHh',
+            //     },
+            // });
+            // const data = await res.json();
+            
+            const { data, status } = await connection_api.get('/favourites');
+
+            console.log('Favoritos');
+            console.log(data);
+
+            // if (res.status !== 200) {
+            //     spanError.innerHTML = "Hubo un error: " + res.status + "<br>" + data.message;
+            // }
+            if (status !== 200) {
+                spanError.innerHTML = "Hubo un error: " + status + "<br>" + data.message;
+            } else {
+                const section = document.getElementById('favoriteMichis')
+                section.innerHTML = "";
+                const h2 = document.createElement('h2');
+                const h2Text = document.createTextNode('Michis favoritos');
+                h2.appendChild(h2Text);
+                section.appendChild(h2);
+                
+                data.forEach(michi => {
+                    const article = document.createElement('article');
+                    const img = document.createElement('img');
+                    const btn = document.createElement('button');
+                    const btnText = document.createTextNode('Sacar al michi de favoritos');
+                    
+                    btn.appendChild(btnText);
+                    btn.onclick = () => deleteFavouriteMichi(michi.id);
+                    
+                    img.src = michi.image.url;
+                    img.width = 150;
+                    article.appendChild(img);
+                    article.appendChild(btn);
+                    section.appendChild(article);
+                });
+            }
+        }
+
+        async function saveFavouriteMichi(id) {
+            // const res = await fetch(API_URL_FAVOURITES, {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //         'X-API-KEY': 'live_b4Q3YyUrueAqjk7Ch6UKAdsd64vDQEcUCTCqjtWNczbGdixz98TD4R9rVfmn5iHh',
+            //     },
+                
+            //     body: JSON.stringify({
+            //         image_id: id
+            //     }),
+            // });
+            // const data = await res.json();
+
+            /**
+             * N17.4: Para realizar un ejemplo de las ventajas de trabajar con axios, se comenta todo el código para conectarse a la 
+             *      API y luego obtener una respuesta en formato json.
+             * Lo primero es que no es necesario crear una variable "res" para almacenar la conexión, sino que axios se utiliza 100% 
+             *      para trabajar con APIs asi que no necesita instrucciones básicas, sabe lo que tiene que hacer.
+             * Asi que se puede declarar como constantes los valores que quiero obtener de respuesta, que serian la data con toda la
+             *      información y el status para poder realizar la validación if-else.
+             * A continuación se llama a la variable con la que se creo la url base utilizando axios y se le pasa directamente el 
+             *      método a utilizar (no es necesario declarar el method)
+             * Dentro del paréntesis se agrega el endpoint al cual se estará apuntando.
+             * No es necesario declarar ningún headers ya que se creo anteriormente en el punto 17.3
+             * Finalmente, lo único que hace falta es enviar lo que se enviaba en el body, el image_id (Ya no es necesario pasar por 
+             *      el proceso de stringify porque axios hace la conversion solo).
+             */
+            const { data, status } = await connection_api.post('/favourites', {
+                image_id: id,
+            });
+            
+            console.log('Gatito Guardado');
+            // console.log(res);
+
+            /**
+             * N17.5: Ya que la variable "res" no existe, se debe ajustar la validación if, pero solo seria eso, ya que status
+             *      sigue existiendo. 
+            */
+            // if (res.status !== 200) {
+            //     spanError.innerHTML = "Hubo un error: " + res.status + data.message;
+            // }
+            if (status !== 200) {
+                spanError.innerHTML = "Hubo un error: " + status + data.message;
+            } else {
+                console.log('Michi agregado a favoritos')
+                loadFavouriteMichis();
+            }
+        }
+
+        async function deleteFavouriteMichi(id) {
+            const res = await fetch(API_URL_FAVOURITES_DELETE(id), {
+                method: 'DELETE',
+                headers: {
+                    'X-API-KEY': 'live_b4Q3YyUrueAqjk7Ch6UKAdsd64vDQEcUCTCqjtWNczbGdixz98TD4R9rVfmn5iHh',
+                },
+            });
+            const data = await res.json();
+
+            
+            if (res.status !== 200) {
+                spanError.innerHTML = "Hubo un error: " + res.status + data.message;
+            } else {
+                console.log('Michi eliminado de favoritos')
+                loadFavouriteMichis();
+            }
+        }
+
+        async function uploadMichiPhoto() {
+            const form = document.getElementById('uploadingForm');
+            const formData = new FormData(form);
+            
+            // console.log(formData.get('file'));
+
+            const res = await fetch(API_URL_UPLOAD, {
+                method: 'POST',
+                headers: {
+                    // 'Content-Type': 'multipart/form-data',
+                    'X-API-KEY': 'live_b4Q3YyUrueAqjk7Ch6UKAdsd64vDQEcUCTCqjtWNczbGdixz98TD4R9rVfmn5iHh',
+                },
+                body: formData,
+            });
+
+            const data = await res.json();
+
+            if (res.status !== 201) {
+                spanError.innerHTML = `Hubo un error al subir michi: ${res.status} ${data.message}`
+            } else {
+                console.log("Foto de michi cargada.");
+                // console.log({ data });
+                // console.log(data.url);
+                saveFavouriteMichi(data.id);
+                loadFavouriteMichis();
+            }
+        }
+
+        loadRandomMichis();
+        loadFavouriteMichis();
+    </script>
+</body>
+</html>
