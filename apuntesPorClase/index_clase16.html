@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FormData: publicando imágenes de michis</title>
+</head>
+<body>
+    <h1>Michis App</h1>
+
+    <span id="error"></span>
+
+    <section id="randomMichis">
+        <h2>Michis aleatorios</h2>
+
+        <article>
+            <img id="img1" width="150" alt="Foto gatito aleatorio">
+
+            <button id="btn1">
+                Guardar michi en favoritos
+            </button>
+        </article>
+
+        <article>
+            <img id="img2" width="150" alt="Foto gatito aleatorio">
+            <button id="btn2">
+                Guardar michi en favoritos
+            </button>
+        </article>
+
+        <button onclick="loadRandomMichis()">Recargar</button>
+    </section>
+    
+    <!--  
+        N16.1: Se crea una nueva sección en la cual ira un formulario para poder subir nuestras propias imágenes de gatos.
+        A la etiqueta form se le quita la propiedad "action" ya que se utilizara un id para interactuar con JavaScript.
+        Se agrega un input de tipo file. 
+        Se agrega un botón y como recomendación se le agrega el tipo button para evitar que el formulario se envié sin datos
+            al presionarlo. Es equivalente a escribir un preventDefault en JavaScript.
+        Se le agrega una función que crearemos después dentro de la propiedad onclick.
+    -->
+    <section id="uploadingMichi">
+        <h2>Sube la foto de tu Michi</h2>
+        <form id="uploadingForm">
+            <!--  -->
+            <input id="file" type="file" name="file">
+            <button type="button" onclick="uploadMichiPhoto()">Subir foto de Michi</button>
+        </form>
+    </section>
+
+    <section id="favoriteMichis">
+        <h2>Michis favoritos</h2>
+
+        <article>
+            <img id="img4" width="150" alt="Foto gatito aleatorio">
+            <button>Sacar al michi de favoritos</button>
+        </article>
+    </section>
+
+    <script>
+        const API_URL = 'https://api.thecatapi.com/v1/images/search?limit=2';
+        const API_URL_FAVOURITES = 'https://api.thecatapi.com/v1/favourites';
+        const API_URL_FAVOURITES_DELETE = (id) => `https://api.thecatapi.com/v1/favourites/${id}`;
+        /**
+         * N16.5: Se debe crear una nueva constante para apuntar al endpoint donde se suben las imágenes como aparece en la 
+         *      documentación oficial.
+         */
+        const API_URL_UPLOAD = 'https://api.thecatapi.com/v1/images/upload';
+
+        const spanError = document.getElementById('error');
+
+        async function loadRandomMichis() {
+            const res = await fetch(API_URL);
+            const data = await res.json();
+            
+            console.log('Random');
+            console.log(data);
+
+            if (res.status !== 200) {
+                spanError.textContent = "Hubo un error: " + res.status;
+            } else {
+                const img1 = document.getElementById('img1');
+                const img2 = document.getElementById('img2');
+                const btn1 = document.getElementById('btn1');
+                const btn2 = document.getElementById('btn2');
+                
+                img1.src = data[0].url;
+                img2.src = data[1].url;
+
+                btn1.onclick = () => saveFavouriteMichi(data[0].id);
+                btn2.onclick = () => saveFavouriteMichi(data[1].id);
+            }
+        }
+
+        async function loadFavouriteMichis() {
+            const res = await fetch(API_URL_FAVOURITES, {
+                method: 'GET',
+                headers: {
+                    'X-API-KEY': 'live_b4Q3YyUrueAqjk7Ch6UKAdsd64vDQEcUCTCqjtWNczbGdixz98TD4R9rVfmn5iHh',
+                },
+            });
+            const data = await res.json();
+            console.log('Favoritos');
+            console.log(data);
+
+            if (res.status !== 200) {
+                spanError.innerHTML = "Hubo un error: " + res.status + "<br>" + data.message;
+            } else {
+                const section = document.getElementById('favoriteMichis')
+                section.innerHTML = "";
+                const h2 = document.createElement('h2');
+                const h2Text = document.createTextNode('Michis favoritos');
+                h2.appendChild(h2Text);
+                section.appendChild(h2);
+                
+                
+                data.forEach(michi => {
+                    const article = document.createElement('article');
+                    const img = document.createElement('img');
+                    const btn = document.createElement('button');
+                    const btnText = document.createTextNode('Sacar al michi de favoritos');
+                    
+                    btn.appendChild(btnText);
+                    btn.onclick = () => deleteFavouriteMichi(michi.id);
+                    
+                    img.src = michi.image.url;
+                    img.width = 150;
+                    article.appendChild(img);
+                    article.appendChild(btn);
+                    section.appendChild(article);
+                });
+            }
+        }
+
+        async function saveFavouriteMichi(id) {
+            const res = await fetch(API_URL_FAVOURITES, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-KEY': 'live_b4Q3YyUrueAqjk7Ch6UKAdsd64vDQEcUCTCqjtWNczbGdixz98TD4R9rVfmn5iHh',
+                },
+                
+                body: JSON.stringify({
+                    image_id: id
+                }),
+            });
+            const data = await res.json();
+            
+            console.log('Gatito Guardado');
+            console.log(res);
+
+            if (res.status !== 200) {
+                spanError.innerHTML = "Hubo un error: " + res.status + data.message;
+            } else {
+                console.log('Michi agregado a favoritos')
+                loadFavouriteMichis();
+            }
+        }
+
+        async function deleteFavouriteMichi(id) {
+            const res = await fetch(API_URL_FAVOURITES_DELETE(id), {
+                method: 'DELETE',
+                headers: {
+                    'X-API-KEY': 'live_b4Q3YyUrueAqjk7Ch6UKAdsd64vDQEcUCTCqjtWNczbGdixz98TD4R9rVfmn5iHh',
+                },
+            });
+            const data = await res.json();
+
+            
+            if (res.status !== 200) {
+                spanError.innerHTML = "Hubo un error: " + res.status + data.message;
+            } else {
+                console.log('Michi eliminado de favoritos')
+                loadFavouriteMichis();
+            }
+        }
+
+        /**
+         * N16.2 Se declara la función, la cual no necesitara recibir argumentos.
+         */
+        async function uploadMichiPhoto() {
+            const form = document.getElementById('uploadingForm');
+            /**
+             * N16.3: Se crea una constante para enlazarla al constructor FormData y se pasa el el formulario como argumento, de esta
+             *      manera, el constructor tomara todos los valores input del formulario y los va a pasar por FormData.
+             */
+            const formData = new FormData(form);
+        
+            /**
+             * N16.4: Ya con el FormData instanciado, se puede realizar una prueba imprimiendo por consola la llave "file" que debe ser
+             *      la misma dentro del html, en la propiedad name "file".
+             * Al presionar el botón "Subir foto de Michi" se imprime un montón de información.
+             * Si se sube una imagen y luego se presiona el botón, se podrá ver la información de la imagen: tamaño, fecha, formato.
+             * Se utiliza el método get() para comunicarse con el input que sea de tipo file.
+             */
+            console.log(formData.get('file'));
+
+            /**
+             * N16.6: Se crea una constante para utilizar el fetch y crear la conexión al endpoint de la API.
+             * Luego de la url, se agrega un objeto y dentro:
+             * El método que sera de tipo POST ya que se esta enviando un archivo.
+             * El headers que tendrá dentro el tipo de contento que sera "multipart/form-data" y la autorización que sera la 
+             *      API KEY como se ha estado trabajando hasta ahora.
+             * 
+             * N18.8: IMPORTANTE -> Si se escribe el código como dice la documentación oficial, se produce un error de tipo 500 y no
+             *      se puede conectar con el servidor. La solución que encontró el profesor es que no es necesario utilizar el 
+             *      content-type, basta solo la API KEY y que en el body se agregue el FormData.
+             */
+            const res = await fetch(API_URL_UPLOAD, {
+                method: 'POST',
+                headers: {
+                    // 'Content-Type': 'multipart/form-data',
+                    'X-API-KEY': 'live_b4Q3YyUrueAqjk7Ch6UKAdsd64vDQEcUCTCqjtWNczbGdixz98TD4R9rVfmn5iHh',
+                },
+                /**
+                 * N16.7: IMPORTANTE -> cuando se crean formularios se deben seleccionar, declarar y obtener
+                 *      los valores de cada input y dentro de la sección del body, crear un objeto utilizando JSON.stringify
+                 * Pero al utilizar la instancia de FormData y decirle que agarre todo lo que viene en el formulario y enviarlo
+                 *      directamente en el body.
+                 */
+                body: formData,
+
+            });
+
+            const data = await res.json();
+
+            if (res.status !== 201) {
+                spanError.innerHTML = `Hubo un error al subir michi: ${res.status} ${data.message}`
+            } else {
+                console.log("Foto de michi cargada.");
+                console.log({ data });
+                console.log(data.url);
+                /**
+                 * N16.8: Se aprovecha de ejecutar la función para guardar al gato en favoritos y se obtiene el id de la imagen 
+                 *      subida para verla reflejada enseguida.
+                 * Finalmente se agrega la función para recargar la sección de favoritos y ver la imagen subida.
+                 */
+                saveFavouriteMichi(data.id);
+                loadFavouriteMichis();
+            }
+        }
+
+        loadRandomMichis();
+        loadFavouriteMichis();
+    </script>
+</body>
+</html>
